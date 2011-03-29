@@ -8,6 +8,9 @@
   },
   "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
   "main": "./index.js",
+  "dependencies": {
+    "gitteh": ">= 0.0.3"
+  },
   "directories": {
     "lib": "."
   },
