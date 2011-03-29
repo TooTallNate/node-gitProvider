@@ -41,7 +41,8 @@ Now the above command gets `index.html` from the specified commit: _f62de2f138dd
 
     curl http://127.0.0.1/v1.1.2/index.html
 
-`git tag`s can also be specified in place of specific commit revisions.
+`git tag`s can also be specified in place of specific commit revisions. Here _v1.1.2_ would be
+a git tag to reference `index.html` from.
 
 
 API
@@ -53,11 +54,11 @@ The `gitProvider` function only requires a path to a git repo. Optionally, you m
 pass an _options_ object that recognizes the following properties:
 
   * __mountPoint__: The request URL in which this handler will kick in. If the request
-                    URL does not begin with the value set here, the the request will be
-                    `next()`'d. (Default `/`, i.e. will always take effect).
+   URL does not begin with the value set here, the the request will be
+   `next()`'d. (Default `/`, i.e. will always take effect).
 
   * __indexFile__: The name of the index file to serve if a directory name is specified.
-                   (Default `index.html`).
+   (Default `index.html`).
 
 
 [Node]: http://nodejs.org
