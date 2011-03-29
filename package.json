@@ -1,0 +1,17 @@
+{
+  "name": "gitProvider",
+  "description": "An http/connect/stack layer to serve the contents of a 'git' repository over HTTP.",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/TooTallNate/node-gitProvider.git"
+  },
+  "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
+  "main": "./index.js",
+  "directories": {
+    "lib": "."
+  },
+  "engines": {
+    "node": ">= 0.4.0"
+  }
+}
