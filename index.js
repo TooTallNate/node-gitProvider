@@ -27,7 +27,11 @@ function setup(repoPath, options) {
 
   return function gitProvider(req, res, next) {
     // Ensure that 'next()' exists (in the case of a plain http.Server)
-    next = next || function(err) { res.writeHead(err ? 500 : 404); res.end(err ? err.stack : "Not Found"); };
+    next = next || function(err) {
+      if (err) console.error(err);
+      res.writeHead(err ? 500 : 404);
+      res.end(err ? err.stack : "Not Found");
+    };
 
     if (!req.hasOwnProperty("uri")) { req.uri = url.parse(req.url); }
     if (req.uri.pathname.substring(0, options.mountPoint.length) !== options.mountPoint) return next();
@@ -132,7 +136,14 @@ function serveGitFile(repo, tree, parts, res, next) {
   var thisPart = parts.shift();
   var isLastPart = parts.length === 0;
   tree.getEntry(thisPart, function(err, entry) {
-    if (err) return next(err);
+    if (err) {
+      // We're really just checking to see if the file was not found so that
+      // we can 404. node-gitteh currently has a bug where the "getEntry" call
+      // won't populate the 'err' object while async:
+      //   https://github.com/libgit2/node-gitteh/issues#issue/5
+      if (err.message === "Couldn't get tree entry.") return next();
+      return next(err);
+    }
     if (isLastPart) {
       repo.getRawObject(entry.id, function(err, buf) {
         if (err) return next(err);
