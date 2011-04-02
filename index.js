@@ -1,7 +1,9 @@
 var fs = require('fs');
 var url = require('url');
 var path = require('path');
+var mime = require('mime');
 var gitteh = require('gitteh');
+var extname = require('path').extname;
 
 var GIT_DIR = '.git';
 
@@ -94,7 +96,7 @@ function setup(repoPath, options) {
                 if (err.code === 'ENOENT') return next();
                 else return next(err);
               }
-              serveBuffer(buf, res);
+              serveBuffer(buf, res, gitPath);
             });
           } else {
             // Is a bare repo, serve file from resolved HEAD
@@ -149,7 +151,7 @@ function serveGitFile(repo, tree, parts, res, next) {
       repo.getRawObject(entry.id, function(err, buf) {
         if (err) return next(err);
         if (!buf.data) return next();
-        serveBuffer(buf.data, res);
+        serveBuffer(buf.data, res, parts.join('/'));
       });
     } else {
       repo.getTree(entry.id, function(err, entryTree) {
@@ -161,8 +163,9 @@ function serveGitFile(repo, tree, parts, res, next) {
 }
 
 
-function serveBuffer(buf, res) {
+function serveBuffer(buf, res, filename) {
   res.setHeader('Content-Length', buf.length);
+  res.setHeader('Content-Type', mime.lookup(extname(filename)) );
   res.end(buf);
 }
 
