@@ -39,13 +39,11 @@ function setup(repoPath, options) {
     if (req.uri.pathname.substring(0, options.mountPoint.length) !== options.mountPoint) return next();
 
     var gitPath = req.uri.pathname.substring(options.mountPoint.length);
-    //console.log(gitPath);
 
     var parts = gitPath.split('/');
     if (parts[parts.length-1].length === 0) {
       parts[parts.length-1] = options.indexFile;
     }
-    //console.log(parts);
 
     // The first part may be a commit reference, a git tag name, or just simply
     // the name of the file to serve from a top-level.
@@ -59,7 +57,6 @@ function setup(repoPath, options) {
     }
 
     function checkCommit(commitRef) {
-      console.log(commitRef);
       repo.getCommit(commitRef, function(err, commit) {
         if (err) {
           if (err.gitError === gitteh.error.GIT_ENOTFOUND) {
@@ -201,7 +198,6 @@ function listTags(repo, callback) {
     if (err) return callback(err);
     refs = refs.filter(function(ref) { return /^refs\/tags\//.test(ref); });
     refs = refs.map(function(ref) { return ref.substring(TAG_REF.length); });
-    console.log(refs);
     callback(null, refs);
   }
 }
