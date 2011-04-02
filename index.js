@@ -141,6 +141,7 @@ function serveGitFile(repo, tree, parts, res, next) {
       // we can 404. node-gitteh currently has a bug where the "getEntry" call
       // won't populate the 'err' object while async:
       //   https://github.com/libgit2/node-gitteh/issues#issue/5
+      // TODO: Don't to a nasty hack check like this, it's super brittle...
       if (err.message === "Couldn't get tree entry.") return next();
       return next(err);
     }
@@ -166,22 +167,38 @@ function serveBuffer(buf, res) {
 }
 
 
-function resolveHead(repo, callback) {
-  fs.readFile(path.join(repo.path, 'refs', 'heads', 'master'), function(err, commit) {
+function resolveReference(repo, reference, callback) {
+  repo.getReference(reference, onRef);
+  function onRef(err, ref) {
     if (err) return callback(err);
-    callback(null, commit.toString().trim());
-  });
+    if (ref.type === gitteh.GIT_REF_OID) {
+      callback(null, ref.target);
+    } else if (ref.type === gitteh.GIT_REF_SYMBOLIC) {
+      ref.resolve(onRef);
+    } else {
+      callback(new Error('Got unknown reference type: ' + ref.type));
+    }
+  }
 }
 
 
+function resolveHead(repo, callback) {
+  resolveReference(repo, 'HEAD', callback);
+}
+
+var TAG_REF = 'refs/tags/';
 function resolveTag(repo, tag, callback) {
-  fs.readFile(path.join(repo.path, 'refs', 'tags', tag), function(err, commit) {
-    if (err) return callback(err);
-    callback(null, commit.toString().trim());
-  });
+  resolveReference(repo, TAG_REF+tag, callback);
 }
 
 
 function listTags(repo, callback) {
-  fs.readdir(path.join(repo.path, 'refs', 'tags'), callback);
+  repo.listReferences(gitteh.GIT_REF_LISTALL, onList);
+  function onList(err, refs) {
+    if (err) return callback(err);
+    refs = refs.filter(function(ref) { return /^refs\/tags\//.test(ref); });
+    refs = refs.map(function(ref) { return ref.substring(TAG_REF.length); });
+    console.log(refs);
+    callback(null, refs);
+  }
 }
