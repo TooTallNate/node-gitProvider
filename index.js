@@ -3,7 +3,6 @@ var url = require('url');
 var path = require('path');
 var mime = require('mime');
 var gitteh = require('gitteh');
-var extname = require('path').extname;
 
 var GIT_DIR = '.git';
 
@@ -45,9 +44,11 @@ function setup(repoPath, options) {
       parts[parts.length-1] = options.indexFile;
     }
 
-    // The first part may be a commit reference, a git tag name, or just simply
-    // the name of the file to serve from a top-level.
+    // The first part may be a commit reference, a git tag/branch name,
+    // or just simply the name of the file to serve from a top-level.
     var firstPart = parts[0];
+    //console.log("First Part: " + firstPart);
+
     if (firstPart.length === 40) {
       // Check the commit id, then git tag, then serve file
       checkCommit(firstPart);
@@ -68,7 +69,7 @@ function setup(repoPath, options) {
           }
         }
         // If there was no error then we got a valid commit id. Serve the file from parts[1]
-        commit.getTree(function(err, tree) {
+        repo.getTree(commit.tree, function(err, tree) {
           serveGitFile(repo, tree, parts.slice(1), res, next);
         });
       });
@@ -77,14 +78,19 @@ function setup(repoPath, options) {
       listTags(repo, function(err, tags) {
         if (err) return next(err);
 
+        //console.log("Tags: " + tags);
+
         var tagIndex = tags.indexOf(firstPart);
         if (tagIndex >= 0) {
+          //console.log("Found tag: " + tags[tagIndex]);
+
           // Requested a file from a git tag. Resolve the git tag then serve the file from parts[1]
           resolveTag(repo, tag, function(err, commitRef) {
             if (err) return next(err);
             serveCommit(commitRef, parts.slice(1));
           });
         } else {
+          //console.log("Tag not found");
           // No git tag, all the parts are the path of the file to server.
           // Serve from HEAD (bare repo) or a real file (cloned repo).
           if (isClone) {
@@ -109,7 +115,7 @@ function setup(repoPath, options) {
     function serveCommit(commitRef, parts) {
       repo.getCommit(commitRef, function(err, commit) {
         if (err) return next(err);
-        commit.getTree(function(err, tree) {
+        repo.getTree(commit.tree, function(err, tree) {
           if (err) return next(err);
           serveGitFile(repo, tree, parts, res, next);
         });
@@ -132,37 +138,37 @@ setup.DEFAULTS = {
 // Recursively gets the tree instances until the last part, which is gets the rawObject
 // for and serves back over HTTP.
 function serveGitFile(repo, tree, parts, res, next) {
+  //console.log("Serving git file: " + parts);
   var thisPart = parts.shift();
   var isLastPart = parts.length === 0;
-  tree.getEntry(thisPart, function(err, entry) {
-    if (err) {
-      // We're really just checking to see if the file was not found so that
-      // we can 404. node-gitteh currently has a bug where the "getEntry" call
-      // won't populate the 'err' object while async:
-      //   https://github.com/libgit2/node-gitteh/issues#issue/5
-      // TODO: Don't to a nasty hack check like this, it's super brittle...
-      if (err.message === "Couldn't get tree entry.") return next();
-      return next(err);
+  var entryIndex = -1;
+  for (var i=0; i < tree.entries.length; i++) {
+    if (tree.entries[i].name === thisPart) {
+      entryIndex = i;
+      break;
     }
-    if (isLastPart) {
-      repo.getRawObject(entry.id, function(err, buf) {
-        if (err) return next(err);
-        if (!buf.data) return next();
-        serveBuffer(buf.data, res, parts.join('/'));
-      });
-    } else {
-      repo.getTree(entry.id, function(err, entryTree) {
-        if (err) return next(err);
-        serveGitFile(repo, entryTree, parts, res, next);
-      });
-    }
-  });
+  }
+  if (entryIndex < 0) return next();
+  var entry = tree.entries[entryIndex];
+  if (isLastPart) {
+    repo.getBlob(entry.id, function(err, buf) {
+      if (err) return next(err);
+      if (!buf.data) return next();
+      serveBuffer(buf.data, res, parts.join('/'));
+    });
+  } else {
+    repo.getTree(entry.id, function(err, entryTree) {
+      if (err) return next(err);
+      serveGitFile(repo, entryTree, parts, res, next);
+    });
+  }
 }
 
 
 function serveBuffer(buf, res, filename) {
+  var contentType = mime.lookup(filename);
   res.setHeader('Content-Length', buf.length);
-  res.setHeader('Content-Type', mime.lookup(extname(filename)) );
+  res.setHeader('Content-Type', contentType);
   res.end(buf);
 }
 

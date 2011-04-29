@@ -9,7 +9,7 @@
   "author": "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
   "main": "./index.js",
   "dependencies": {
-    "gitteh": ">= 0.0.3",
+    "gitteh": ">= 0.1.0",
     "mime": ">= 1.2.1"
   },
   "directories": {
