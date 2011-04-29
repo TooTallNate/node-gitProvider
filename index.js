@@ -154,7 +154,7 @@ function serveGitFile(repo, tree, parts, res, next) {
     repo.getBlob(entry.id, function(err, buf) {
       if (err) return next(err);
       if (!buf.data) return next();
-      serveBuffer(buf.data, res, parts.join('/'));
+      serveBuffer(buf.data, res, thisPart);
     });
   } else {
     repo.getTree(entry.id, function(err, entryTree) {
