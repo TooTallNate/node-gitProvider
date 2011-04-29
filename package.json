@@ -1,7 +1,7 @@
 {
   "name": "gitProvider",
   "description": "An http/connect/stack layer to serve the contents of a 'git' repository over HTTP.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": {
     "type": "git",
     "url": "git://github.com/TooTallNate/node-gitProvider.git"
@@ -20,5 +20,6 @@
   },
   "files": [
     ""
-  ]
+  ],
+  "devDependencies": {}
 }
