@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/TooTallNate/node-gitProvider.png)](http://travis-ci.org/TooTallNate/node-gitProvider)
 node-gitProvider
 ========
 ### An http/connect/stack layer to serve the contents of a 'git' repository over HTTP.
